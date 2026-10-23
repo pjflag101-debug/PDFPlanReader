@@ -7,7 +7,7 @@ Extracts, per page:
 
 RAM Concept output is usually a mix of calculation reports (text + tables:
 loads, design strips, punching shear checks) and plan plots (mostly graphics).
-Pages with very little text are flagged as likely drawings.
+Pages with very little text, or bigger than A4, are flagged as likely drawings.
 """
 
 from __future__ import annotations
@@ -20,6 +20,8 @@ import pymupdf
 
 # Pages with fewer characters than this are probably drawings/plots, not text reports.
 DRAWING_TEXT_THRESHOLD = 200
+# Pages bigger than A4 (842 pt on the long side) are drawing sheets (A3, A1, ...).
+DRAWING_PAGE_SIZE = 900
 
 
 @dataclass
@@ -97,7 +99,8 @@ def read_pdf(
                     text=text,
                     tables=tables,
                     image_path=image_path,
-                    likely_drawing=len(text) < DRAWING_TEXT_THRESHOLD,
+                    likely_drawing=len(text) < DRAWING_TEXT_THRESHOLD
+                    or max(page.rect.width, page.rect.height) > DRAWING_PAGE_SIZE,
                 )
             )
 
