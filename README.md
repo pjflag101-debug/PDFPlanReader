@@ -36,41 +36,43 @@ It intentionally does **not** include DXF coordinate recovery, RAM Concept CPT c
 
    Missing values are not guessed; they become `REVIEW_REQUIRED`.
 
-## Install
+## Setup
 
 ```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\pip install -e ".[dev]"
-
-# macOS/Linux
+python3 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
 ```
 
-## Basic PDF extraction
+## Step 1: Read a PDF
 
 ```bash
-pdfplan read path/to/plan.pdf --images
+.venv/bin/ramread samples/your_report.pdf            # text + tables
+.venv/bin/ramread samples/your_report.pdf --images   # also render every page to PNG
 ```
 
-The command writes structured JSON plus optional page PNGs. Text extraction includes PDF-native bounding boxes so later note-to-region alignment uses the PDF itself rather than CAD text insertion points.
+Writes `output/<name>.txt` (all text, by page) and `output/<name>.json` (text, tables,
+metadata, and a `likely_drawing` flag for each page).
 
-## Python
+From Python:
 
 ```python
 from pdf_plan_reader import read_pdf
 
-pdf = read_pdf("plan.pdf")
-for page in pdf.pages:
-    print(page.number, len(page.words), page.image_path)
+doc = read_pdf("samples/your_report.pdf")
+for page in doc.pages:
+    print(page.number, page.likely_drawing, page.tables)
 ```
 
 ## Tests
 
 ```bash
-pytest
+.venv/bin/pytest
 ```
 
-## Data and models
+## Roadmap
 
-This public repository must not contain client drawings or proprietary project data. Training datasets, PDFs, checkpoints and review artifacts should remain in approved private/local storage. Only reusable code, schemas and non-sensitive metadata belong here.
+1. ~~Basic PDF reading: text, tables, page images~~
+2. Identify RAM Concept page types (material properties, load cases, design strips, punching shear, deflection plots)
+3. Parse those sections into structured data (e.g. design strip moments, punching shear ratios)
+4. Ask questions with an AI model: send text and tables (plus page images for plots) to an LLM
+5. Automated checks: flag failing strips, high punching shear ratios, deflection limit breaches
